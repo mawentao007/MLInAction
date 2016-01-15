@@ -1,10 +1,14 @@
+#coding:utf-8
 '''
 Created on Feb 4, 2011
 Tree-Based Regression Methods
 @author: Peter Harrington
 '''
 from numpy import *
+import matplotlib.pyplot as plt
 
+
+#载入数据，放入一个list，注意不是mat
 def loadDataSet(fileName):      #general function to parse tab -delimited floats
     dataMat = []                #assume last column is target value
     fr = open(fileName)
@@ -14,14 +18,17 @@ def loadDataSet(fileName):      #general function to parse tab -delimited floats
         dataMat.append(fltLine)
     return dataMat
 
+#按照特定索引位置的feature，根据value进行分割
 def binSplitDataSet(dataSet, feature, value):
     mat0 = dataSet[nonzero(dataSet[:,feature] > value)[0],:][0]
     mat1 = dataSet[nonzero(dataSet[:,feature] <= value)[0],:][0]
     return mat0,mat1
 
+#返回最后一列数据的均值
 def regLeaf(dataSet):#returns the value used for each leaf
     return mean(dataSet[:,-1])
 
+#计算方差
 def regErr(dataSet):
     return var(dataSet[:,-1]) * shape(dataSet)[0]
 
@@ -46,24 +53,25 @@ def modelErr(dataSet):
     return sum(power(Y - yHat,2))
 
 def chooseBestSplit(dataSet, leafType=regLeaf, errType=regErr, ops=(1,4)):
-    tolS = ops[0]; tolN = ops[1]
+    tolS = ops[0]; tolN = ops[1]  #错误和最小分支数据个数的容忍值
     #if all the target variables are the same value: quit and return value
     if len(set(dataSet[:,-1].T.tolist()[0])) == 1: #exit cond 1
         return None, leafType(dataSet)
     m,n = shape(dataSet)
     #the choice of the best feature is driven by Reduction in RSS error from mean
-    S = errType(dataSet)
+    S = errType(dataSet)  #方差
     bestS = inf; bestIndex = 0; bestValue = 0
-    for featIndex in range(n-1):
+    for featIndex in range(n-1):   #扫描features
         for splitVal in set(dataSet[:,featIndex]):
             mat0, mat1 = binSplitDataSet(dataSet, featIndex, splitVal)
-            if (shape(mat0)[0] < tolN) or (shape(mat1)[0] < tolN): continue
-            newS = errType(mat0) + errType(mat1)
+            if (shape(mat0)[0] < tolN) or (shape(mat1)[0] < tolN): continue  #分割部分如果小于容忍值，继续分
+            newS = errType(mat0) + errType(mat1)  #查找方差最优值
             if newS < bestS: 
                 bestIndex = featIndex
                 bestValue = splitVal
                 bestS = newS
     #if the decrease (S-bestS) is less than a threshold don't do the split
+    #如果减少量少于阈值，不再继续分割
     if (S - bestS) < tolS: 
         return None, leafType(dataSet) #exit cond 2
     mat0, mat1 = binSplitDataSet(dataSet, bestIndex, bestValue)
@@ -76,7 +84,7 @@ def createTree(dataSet, leafType=regLeaf, errType=regErr, ops=(1,4)):#assume dat
     feat, val = chooseBestSplit(dataSet, leafType, errType, ops)#choose the best split
     if feat == None: return val #if the splitting hit a stop condition return val
     retTree = {}
-    retTree['spInd'] = feat
+    retTree['spInd'] = feat   #当前树分割所依据的feature的索引
     retTree['spVal'] = val
     lSet, rSet = binSplitDataSet(dataSet, feat, val)
     retTree['left'] = createTree(lSet, leafType, errType, ops)
@@ -134,3 +142,35 @@ def createForeCast(tree, testData, modelEval=regTreeEval):
     for i in range(m):
         yHat[i,0] = treeForeCast(tree, mat(testData[i]), modelEval)
     return yHat
+
+if __name__ == "__main__":
+    dataMat = loadDataSet("ex2.txt")
+    myMat = mat(dataMat)
+    myTree = createTree(myMat,ops=(0,1))
+
+    myDatTest = loadDataSet('ex2test.txt')
+    prune(myTree,mat(myDatTest))
+    # retTree = createTree(myMat)
+    # print retTree
+    #
+    # fig = plt.figure()
+    # ax = fig.add_subplot(111)
+    # ax.scatter(myMat[:,0].flatten().A[0],myMat[:,1].flatten().A[0])
+    # plt.show()
+
+    myMat2 = mat(loadDataSet("exp.txt"))
+    ltree = createTree(myMat2,modelLeaf,modelErr,(1,10))
+    print ltree
+    x = arange(0,0.3,0.01)
+    y = (ltree['right'].tolist()[0]  + ltree['right'].tolist()[1] * x)
+    lx = arange(0.3,0.6,0.01)
+    ly = (ltree['left'].tolist()[0]  + ltree['left'].tolist()[1] * lx)
+    print x,y
+    fig = plt.figure()
+    ax = fig.add_subplot(111)
+    ax.plot(x,y)
+    bx = fig.add_subplot(111)
+    bx.plot(lx,ly)
+    cx = fig.add_subplot(111)
+    cx.scatter(myMat2[:,0],myMat2[:,1])
+    plt.show()

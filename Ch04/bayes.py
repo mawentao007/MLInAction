@@ -1,8 +1,4 @@
-'''
-Created on Oct 19, 2010
-
-@author: Peter
-'''
+#coding=utf-8
 from numpy import *
 
 def loadDataSet():
@@ -21,6 +17,7 @@ def createVocabList(dataSet):
         vocabSet = vocabSet | set(document) #union of the two sets
     return list(vocabSet)
 
+#如果输入词汇在list中，则list中该词汇对应位置的返回vector为1
 def setOfWords2Vec(vocabList, inputSet):
     returnVec = [0]*len(vocabList)
     for word in inputSet:
@@ -30,24 +27,25 @@ def setOfWords2Vec(vocabList, inputSet):
     return returnVec
 
 def trainNB0(trainMatrix,trainCategory):
-    numTrainDocs = len(trainMatrix)
-    numWords = len(trainMatrix[0])
-    pAbusive = sum(trainCategory)/float(numTrainDocs)
+    numTrainDocs = len(trainMatrix)   #文件个数
+    numWords = len(trainMatrix[0])    #单词个数
+    pAbusive = sum(trainCategory)/float(numTrainDocs)  #类比个数/文件个数
     p0Num = ones(numWords); p1Num = ones(numWords)      #change to ones() 
     p0Denom = 2.0; p1Denom = 2.0                        #change to 2.0
-    for i in range(numTrainDocs):
+    for i in range(numTrainDocs):    #对于每个文件
         if trainCategory[i] == 1:
-            p1Num += trainMatrix[i]
+            p1Num += trainMatrix[i]    #每个文档的单词向量，对应文档是1的时候
             p1Denom += sum(trainMatrix[i])
         else:
             p0Num += trainMatrix[i]
             p0Denom += sum(trainMatrix[i])
+    print p1Num
     p1Vect = log(p1Num/p1Denom)          #change to log()
     p0Vect = log(p0Num/p0Denom)          #change to log()
     return p0Vect,p1Vect,pAbusive
 
 def classifyNB(vec2Classify, p0Vec, p1Vec, pClass1):
-    p1 = sum(vec2Classify * p1Vec) + log(pClass1)    #element-wise mult
+    p1 = sum(vec2Classify * p1Vec) + log(pClass1)    #element-wise mult log 加就是乘
     p0 = sum(vec2Classify * p0Vec) + log(1.0 - pClass1)
     if p1 > p0:
         return 1
@@ -169,3 +167,13 @@ def getTopWords(ny,sf):
     print "NY**NY**NY**NY**NY**NY**NY**NY**NY**NY**NY**NY**NY**NY**NY**NY**"
     for item in sortedNY:
         print item[0]
+
+if __name__ == "__main__":
+    listOPosts,listClasses = loadDataSet()
+    myVocabList = createVocabList(listOPosts)
+    vec = setOfWords2Vec(myVocabList,listOPosts[0])
+    trainMat = []
+    for postinDoc in listOPosts:
+        trainMat.append(setOfWords2Vec(myVocabList,postinDoc))   #每个文档的单词向量
+        p0V,p1V,pAb = trainNB0(trainMat,listClasses)
+        print p1V

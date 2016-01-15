@@ -1,10 +1,12 @@
 from numpy import *
 
 from Tkinter import *
-import regTrees
-
 import matplotlib
 matplotlib.use('TkAgg')
+import regTrees
+
+
+
 from matplotlib.backends.backend_tkagg import FigureCanvasTkAgg
 from matplotlib.figure import Figure
 

@@ -1,9 +1,7 @@
-'''
-Created on Feb 16, 2011
-k Means Clustering for Ch10 of Machine Learning in Action
-@author: Peter Harrington
-'''
+#coding=utf-8
 from numpy import *
+import matplotlib
+import matplotlib.pyplot as plt
 
 def loadDataSet(fileName):      #general function to parse tab -delimited floats
     dataMat = []                #assume last column is target value
@@ -25,7 +23,8 @@ def randCent(dataSet, k):
         rangeJ = float(max(dataSet[:,j]) - minJ)
         centroids[:,j] = mat(minJ + rangeJ * random.rand(k,1))
     return centroids
-    
+
+#m*2的矩阵，保存点和对应的集群
 def kMeans(dataSet, k, distMeas=distEclud, createCent=randCent):
     m = shape(dataSet)[0]
     clusterAssment = mat(zeros((m,2)))#create mat to assign data points 
@@ -40,9 +39,11 @@ def kMeans(dataSet, k, distMeas=distEclud, createCent=randCent):
                 distJI = distMeas(centroids[j,:],dataSet[i,:])
                 if distJI < minDist:
                     minDist = distJI; minIndex = j
+            #如果距离某个中心点最近，更新
             if clusterAssment[i,0] != minIndex: clusterChanged = True
             clusterAssment[i,:] = minIndex,minDist**2
-        print centroids
+        #print centroids
+        #重新计算中心点
         for cent in range(k):#recalculate centroids
             ptsInClust = dataSet[nonzero(clusterAssment[:,0].A==cent)[0]]#get all the point in this cluster
             centroids[cent,:] = mean(ptsInClust, axis=0) #assign centroid to mean 
@@ -58,12 +59,12 @@ def biKmeans(dataSet, k, distMeas=distEclud):
     while (len(centList) < k):
         lowestSSE = inf
         for i in range(len(centList)):
-            ptsInCurrCluster = dataSet[nonzero(clusterAssment[:,0].A==i)[0],:]#get the data points currently in cluster i
+            ptsInCurrCluster = dataSet[nonzero(clusterAssment[:,0].A==i)[0],:]#get the data points currently in cluster i 对于当前的小集群进行分割
             centroidMat, splitClustAss = kMeans(ptsInCurrCluster, 2, distMeas)
-            sseSplit = sum(splitClustAss[:,1])#compare the SSE to the currrent minimum
-            sseNotSplit = sum(clusterAssment[nonzero(clusterAssment[:,0].A!=i)[0],1])
+            sseSplit = sum(splitClustAss[:,1])#compare the SSE to the currrent minimum 分割后小集合的偏差值
+            sseNotSplit = sum(clusterAssment[nonzero(clusterAssment[:,0].A!=i)[0],1])  #其它部分的距离
             print "sseSplit, and notSplit: ",sseSplit,sseNotSplit
-            if (sseSplit + sseNotSplit) < lowestSSE:
+            if (sseSplit + sseNotSplit) < lowestSSE:          #两者相加是否是最小的
                 bestCentToSplit = i
                 bestNewCents = centroidMat
                 bestClustAss = splitClustAss.copy()
@@ -113,8 +114,7 @@ def distSLC(vecA, vecB):#Spherical Law of Cosines
                       cos(pi * (vecB[0,0]-vecA[0,0]) /180)
     return arccos(a + b)*6371.0 #pi is imported with numpy
 
-import matplotlib
-import matplotlib.pyplot as plt
+
 def clusterClubs(numClust=5):
     datList = []
     for line in open('places.txt').readlines():
@@ -137,3 +137,25 @@ def clusterClubs(numClust=5):
         ax1.scatter(ptsInCurrCluster[:,0].flatten().A[0], ptsInCurrCluster[:,1].flatten().A[0], marker=markerStyle, s=90)
     ax1.scatter(myCentroids[:,0].flatten().A[0], myCentroids[:,1].flatten().A[0], marker='+', s=300)
     plt.show()
+
+
+def  showCluster(dataMat,clusterAssment,centroids):
+     scatterMarkers=['s', 'o', '^', '8', 'p', 'd', 'v', 'h', '>', '<']
+     m,n = shape(centroids)
+     fig = plt.figure()
+     ax1 = fig.add_subplot(111)
+     for i in range(m):
+        ptsInCurrCluster = dataMat[nonzero(clustAssing[:,0].A==i)[0],:]
+        markerStyle = scatterMarkers[i % len(scatterMarkers)]
+        ax1.scatter(ptsInCurrCluster[:,0].flatten().A[0], ptsInCurrCluster[:,1].flatten().A[0], marker=markerStyle, s=90)
+     ax1.scatter(centroids[:,0].flatten().A[0], centroids[:,1].flatten().A[0], marker='+', s=300)
+     plt.show()
+
+
+
+
+if __name__ == "__main__":
+    dataMat = mat(loadDataSet('testSet2.txt'))
+    myCentroids,clustAssing = kMeans(dataMat,3)
+    print clustAssing
+    showCluster(dataMat,clustAssing,myCentroids)
