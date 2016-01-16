@@ -43,12 +43,21 @@ def replaceNanWithMean():
     return datMat
 
 if __name__ == "__main__":
-    dataMat = loadDataSet('testSet.txt')
-    lowDMat,reconMat = pca(dataMat,1)
+    #dataMat = loadDataSet('testSet.txt')
+    #lowDMat,reconMat = pca(dataMat,1)
+    # fig = plt.figure()
+    # ax = fig.add_subplot(111)
+    # ax.scatter(dataMat[:,0].flatten().A[0],dataMat[:,1].flatten().A[0],marker='^',s=50,c='red')
+    # ax.scatter(reconMat[:,0].flatten().A[0],reconMat[:,1].flatten().A[0],marker='o',s=90)
+    # plt.show()
+    a = [[1,2],[1,2]]
+    dataMat = mat(a)
+    print dataMat
     fig = plt.figure()
     ax = fig.add_subplot(111)
+    #注意一定要加flatten()这个方法，否则矩阵画出的点是错的
     ax.scatter(dataMat[:,0].flatten().A[0],dataMat[:,1].flatten().A[0],marker='^',s=50,c='red')
-    ax.scatter(reconMat[:,0].flatten().A[0],reconMat[:,1].flatten().A[0],marker='o',s=90)
+    ax.scatter(dataMat[:,0],dataMat[:,1],marker='o',s=90)
     plt.show()
 
 
